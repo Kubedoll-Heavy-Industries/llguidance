@@ -12,4 +12,4 @@ toktrie = { workspace = true }
 toktrie_hf_tokenizers = { workspace = true }
 anyhow = "1.0.95"
 log = "0.4.25"
-hf-hub = "0.4.2"
+hf-hub = "0.5"

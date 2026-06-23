@@ -10,7 +10,7 @@ use llguidance::{
     toktrie::{InferenceCapabilities, SimpleVob, TokEnv},
     Constraint, HashMap, JsonCompileOptions, ParserFactory, TokenParser,
 };
-use rand::{rngs::SmallRng, Rng, SeedableRng};
+use rand::{rngs::SmallRng, RngExt, SeedableRng};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{

@@ -18,7 +18,7 @@ use clap::Parser;
 use std::{fs::File, io::Read, sync::Arc, vec};
 
 use llguidance::{api::TopLevelGrammar, toktrie::TokEnv, Matcher, ParserFactory};
-use rand::{rngs::SmallRng, Rng, SeedableRng};
+use rand::{rngs::SmallRng, Rng, RngExt, SeedableRng};
 use serde_json::json;
 
 /// Sample a random set-bit index from a `SimpleVob`.

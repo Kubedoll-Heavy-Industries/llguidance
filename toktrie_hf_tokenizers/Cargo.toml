@@ -19,4 +19,4 @@ tokenizers = { version = "0.23", default-features = false, features = [
 log = "0.4.25"
 
 [dev-dependencies]
-rstest = "0.25.0"
+rstest = "0.26"
