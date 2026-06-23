@@ -1,5 +1,5 @@
 use llguidance::substring::chunk_into_words;
-use rand::{rngs::SmallRng, Rng, SeedableRng};
+use rand::{rngs::SmallRng, RngExt, SeedableRng};
 use serde_json::json;
 
 use llg_test_utils::*;

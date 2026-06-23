@@ -13,7 +13,7 @@ use llguidance::{
     toktrie::{TokEnv, TokenId},
     Constraint, ParserFactory,
 };
-use rand::Rng;
+use rand::RngExt;
 use serde_json::Value;
 
 use crate::{rng_utils, PARSER_FACTORY};

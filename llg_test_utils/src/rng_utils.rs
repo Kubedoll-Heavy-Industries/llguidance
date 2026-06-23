@@ -1,5 +1,5 @@
 use llguidance::toktrie::SimpleVob;
-use rand::Rng;
+use rand::{Rng, RngExt};
 
 /// Hash bytes using FNV-1a to produce a 32-bit seed.
 pub fn fnv1a_32(s: &[u8]) -> u32 {

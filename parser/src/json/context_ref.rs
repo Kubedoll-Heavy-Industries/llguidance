@@ -1,5 +1,5 @@
 use anyhow::Result;
-use referencing::{Registry, Resolver, Resource};
+use referencing::{Registry, Resolver};
 use serde_json::Value;
 use std::{cell::RefCell, rc::Rc};
 
@@ -11,11 +11,11 @@ const DEFAULT_ROOT_URI: &str = "json-schema:///";
 pub use referencing::{Draft, ResourceRef};
 
 fn draft_for(value: &Value) -> Draft {
-    DEFAULT_DRAFT.detect(value).unwrap_or(DEFAULT_DRAFT)
+    DEFAULT_DRAFT.detect(value)
 }
 
 pub struct PreContext {
-    registry: Registry,
+    registry: Registry<'static>,
     draft: Draft,
     pub base_uri: String,
 }
@@ -30,26 +30,19 @@ pub struct Context<'a> {
 impl PreContext {
     pub fn new(contents: Value, retriever: Option<RetrieveWrapper>) -> Result<Self> {
         let draft = draft_for(&contents);
+        let base_uri = draft
+            .create_resource_ref(&contents)
+            .id()
+            .unwrap_or(DEFAULT_ROOT_URI)
+            .to_string();
         let resource = draft.create_resource(contents);
-        let base_uri = resource.id().unwrap_or(DEFAULT_ROOT_URI).to_string();
-
-        let retriever: &dyn referencing::Retrieve = if let Some(retriever) = retriever.as_ref() {
-            retriever
+        let registry_builder = Registry::new().draft(draft);
+        let registry_builder = if let Some(retriever) = retriever {
+            registry_builder.retriever(retriever)
         } else {
-            &referencing::DefaultRetriever
+            registry_builder
         };
-
-        let registry = {
-            // Weirdly no apparent way to instantiate a new registry with a retriever, so we need to
-            // make an empty one and then add the retriever + resource that may depend on said retriever
-            let empty_registry =
-                Registry::try_from_resources(std::iter::empty::<(String, Resource)>())?;
-            empty_registry.try_with_resources_and_retriever(
-                vec![(&base_uri, resource)],
-                retriever,
-                draft,
-            )?
-        };
+        let registry = registry_builder.add(&base_uri, resource)?.prepare()?;
 
         Ok(PreContext {
             registry,
@@ -61,7 +54,9 @@ impl PreContext {
 
 impl<'a> Context<'a> {
     pub fn new(pre_context: &'a PreContext) -> Result<Self> {
-        let resolver = pre_context.registry.try_resolver(&pre_context.base_uri)?;
+        let resolver = pre_context
+            .registry
+            .resolver(referencing::uri::from_str(&pre_context.base_uri)?);
         let ctx = Context {
             resolver,
             draft: pre_context.draft,
@@ -83,16 +78,13 @@ impl<'a> Context<'a> {
     }
 
     pub fn as_resource_ref<'r>(&'a self, contents: &'r Value) -> ResourceRef<'r> {
-        self.draft
-            .detect(contents)
-            .unwrap_or(DEFAULT_DRAFT)
-            .create_resource_ref(contents)
+        self.draft.detect(contents).create_resource_ref(contents)
     }
 
     pub fn normalize_ref(&self, reference: &str) -> Result<String> {
         Ok(self
             .resolver
-            .resolve_against(&self.resolver.base_uri().borrow(), reference)?
+            .resolve_uri(&self.resolver.base_uri().borrow(), reference)?
             .normalize()
             .into_string())
     }
